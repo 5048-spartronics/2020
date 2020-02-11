@@ -55,68 +55,26 @@ public class Robot extends TimedRobot {
     Faults _faults_L = new Faults();
     Faults _faults_R = new Faults();
     
-    double shooterPower = 0.5;
-    boolean shooterEnabled = false;
+    private final double minShooterPower = 0.0;
+    private final double maxShooterPower = 1.0;
+    private final double shooterIncrement = 0.01;
+
+    private double shooterPower = 0.0;
+    private boolean shooterEnabled = false;
 
     @Override
     public void teleopPeriodic() {
-
-        String work = "";
-
-
-        //boolean btn1 = _joystick.getRawButton(1); /* is button is down, print joystick values */
-        if(_controller.getStartButtonPressed())
-        {
-            if(shooterEnabled)
-            {
-                shooterEnabled = false;
-            }
-            else{
-                shooterEnabled = true;
-            }
-        }
-
-
-        if(_controller.getAButtonPressed() && shooterPower > 0.0 && shooterEnabled)
-        {
-            shooterPower -= 0.01;
-            _rightShooter.set(shooterPower);
-            _leftShooter.set(shooterPower);
-        }
-
-        if(_controller.getYButtonPressed() && shooterPower < 1.0 && shooterEnabled)
-        {
-            shooterPower += 0.01;
-            _rightShooter.set(shooterPower);
-            _leftShooter.set(shooterPower);
-        }
-
-        if(shooterEnabled)
-        {
-            _rightShooter.set(shooterPower);
-            _leftShooter.set(shooterPower);
-        }
-        else{
-            _rightShooter.set(0);
-            _leftShooter.set(0);
-        }
-
-        SmartDashboard.putNumber("power", shooterPower);
-        SmartDashboard.putBoolean("Shooter Enabled", shooterEnabled);
-       
-        _leftShooter.getFaults(_faults_L);
-        _rightShooter.getFaults(_faults_R);
-
-        if (_faults_L.SensorOutOfPhase) {
-            work += " L sensor is out of phase";
-        }
-        if (_faults_R.SensorOutOfPhase) {
-            work += " R sensor is out of phase";
-        }
+        ManageShooter();
     }
 
     @Override
     public void robotInit() {
+        InitShooter();
+
+    }
+
+    private void InitShooter()
+    {
         /* factory default values */
         _rightShooter.configFactoryDefault();
         _leftShooter.configFactoryDefault();
@@ -131,5 +89,63 @@ public class Robot extends TimedRobot {
         _rightShooter.setSensorPhase(true);
         _leftShooter.setSensorPhase(true);
 
+    }
+    private void ManageShooter()
+    {
+
+        String work = "";
+
+
+        //boolean btn1 = _joystick.getRawButton(1); /* is button is down, print joystick values */
+        if(_controller.getStartButtonPressed())
+        {
+            ToggleShooterEnabled();
+        }
+
+
+        if(_controller.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
+        {
+            shooterPower -= shooterIncrement;
+            SetShooterPower(shooterPower);
+        }
+
+        if(_controller.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
+        {
+            shooterPower += shooterIncrement;
+            SetShooterPower(shooterPower);
+        }
+
+        if(shooterEnabled)
+        {
+            SetShooterPower(shooterPower);
+        }
+        else{
+            SetShooterPower(0.0);
+        }
+
+        SmartDashboard.putNumber("power", shooterPower);
+        SmartDashboard.putBoolean("Shooter Enabled", shooterEnabled);
+       
+        _leftShooter.getFaults(_faults_L);
+        _rightShooter.getFaults(_faults_R);
+
+        if (_faults_L.SensorOutOfPhase) {
+            work += " L sensor is out of phase";
+        }
+        if (_faults_R.SensorOutOfPhase) {
+            work += " R sensor is out of phase";
+        }
+
+    }
+
+    private void SetShooterPower(double power)
+    {
+        _rightShooter.set(power);
+        _leftShooter.set(power);
+        
+    }
+    private void ToggleShooterEnabled()
+    {
+        shooterEnabled = !shooterEnabled;
     }
 }
