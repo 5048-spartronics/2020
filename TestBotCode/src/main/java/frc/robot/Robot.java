@@ -36,6 +36,8 @@ import com.ctre.phoenix.motorcontrol.Faults;
 import com.ctre.phoenix.motorcontrol.InvertType;
 //import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.revrobotics.SparkMax;
+import edu.wpi.first.wpilibj.Timer;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Joystick;
@@ -44,11 +46,13 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
+    private final Timer m_timer = new Timer();
     /*
      * --- [1] Update CAN Device IDs ------
      */
     WPI_VictorSPX _rightShooter = new WPI_VictorSPX(0);
-    WPI_VictorSPX _leftShooter = new WPI_VictorSPX(1);  
+    WPI_VictorSPX _leftShooter = new WPI_VictorSPX(1); 
+ 
 
     XboxController _controller = new XboxController(0);
 
@@ -65,12 +69,38 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         ManageShooter();
+        ManageDrive();
     }
 
     @Override
     public void robotInit() {
         InitShooter();
 
+    }
+    /**
+     * This function is run once each time the robot enters autonomous mode.
+     */
+    @Override
+    public void autonomousInit() {
+      m_timer.reset();
+      m_timer.start();
+    }
+  
+    /**
+     * This function is called periodically during autonomous.
+     */
+    @Override
+    public void autonomousPeriodic() {
+      
+      
+      // Drive for 2 seconds
+      /*if (m_timer.get() < 2.0) {
+        m_robotDrive.arcadeDrive(0.5, 0.0); // drive forwards half speed
+      } else {
+        m_robotDrive.stopMotor(); // stop robot
+      }*/
+  
+      
     }
 
     private void InitShooter()
@@ -88,6 +118,10 @@ public class Robot extends TimedRobot {
          */
         _rightShooter.setSensorPhase(true);
         _leftShooter.setSensorPhase(true);
+
+    }
+    private void ManageDrive()
+    {
 
     }
     private void ManageShooter()

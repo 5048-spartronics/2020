@@ -12,5 +12,12 @@
     "debugfile": "frcJava_roborio.debugconfig",
     "project": "IanTestBot",
     "language": "java"
+  },
+  {
+    "artifact": "frcJava (in project TestBotCode)",
+    "target": "roborio",
+    "debugfile": "frcJava_roborio.debugconfig",
+    "project": "TestBotCode",
+    "language": "java"
   }
 ]
