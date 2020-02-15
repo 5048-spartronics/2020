@@ -34,30 +34,51 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.Faults;
 import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 //import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.SparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.Timer;
 
+//Color Imports
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.I2C;
+import com.revrobotics.ColorSensorV3;
+import com.revrobotics.ColorMatchResult;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.ColorMatch;
+
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import edu.wpi.first.wpilibj.DriverStation;
+
 public class Robot extends TimedRobot {
     private final Timer m_timer = new Timer();
     /*
-     * --- [1] Update CAN Device IDs ------
-     */
-    WPI_VictorSPX _rightShooter = new WPI_VictorSPX(0);
-    WPI_VictorSPX _leftShooter = new WPI_VictorSPX(1); 
- 
+     * --- [1] Update CAN Device IDs -----
+     */     
+    private CANSparkMax _leftFrontDrive ;
+    private CANSparkMax _rightFrontDrive;
+    private CANSparkMax _leftRearDrive;
+    private CANSparkMax _rightRearDrive;
+    private WPI_VictorSPX _leftShooter = new WPI_VictorSPX(5); 
+    private WPI_VictorSPX _rightShooter = new WPI_VictorSPX(6);
+    
 
-    XboxController _controller = new XboxController(0);
+    private XboxController _driveController = new XboxController(0);
+    private XboxController _operatorController = new XboxController(1);
+    
+    private final I2C.Port i2cPort = I2C.Port.kOnboard;
+    private DifferentialDrive _differentialDrive;
 
-    Faults _faults_L = new Faults();
-    Faults _faults_R = new Faults();
+    private Faults _faults_L = new Faults();
+    private Faults _faults_R = new Faults();
     
     private final double minShooterPower = 0.0;
     private final double maxShooterPower = 1.0;
@@ -66,15 +87,21 @@ public class Robot extends TimedRobot {
     private double shooterPower = 0.0;
     private boolean shooterEnabled = false;
 
+    private DriverStation _driverStation = null;
+
+    private String currentColor = null;
+
     @Override
     public void teleopPeriodic() {
         ManageShooter();
         ManageDrive();
+        ManageColorSensor();
     }
 
     @Override
     public void robotInit() {
         InitShooter();
+        InitDrive();
 
     }
     /**
@@ -120,10 +147,45 @@ public class Robot extends TimedRobot {
         _leftShooter.setSensorPhase(true);
 
     }
+    private void InitDrive(){
+        _leftFrontDrive = new CANSparkMax(1, MotorType.kBrushless);
+        _rightFrontDrive = new CANSparkMax(2, MotorType.kBrushless);
+        _leftRearDrive = new CANSparkMax(3, MotorType.kBrushless);
+        _rightRearDrive = new CANSparkMax(4, MotorType.kBrushless);
+
+        _leftFrontDrive.restoreFactoryDefaults();
+        _rightFrontDrive.restoreFactoryDefaults();
+        _leftRearDrive.restoreFactoryDefaults();
+        _rightRearDrive.restoreFactoryDefaults();
+
+        _leftRearDrive.follow(_leftFrontDrive);
+        _rightRearDrive.follow(_rightFrontDrive);
+
+        _differentialDrive = new DifferentialDrive(_leftFrontDrive, _rightFrontDrive);
+    }
     private void ManageDrive()
     {
+        _differentialDrive.arcadeDrive(_driveController.getX(), _driveController.getY());
 
     }
+    private void ManageColorSensor()
+    {
+        //#Buttons
+        if(_driveController.getYButtonPressed())
+        {
+            DeployColorSensor();
+        }
+        if(_driveController.getXButtonPressed())
+        {
+            
+        }
+        if(_driveController.getBButtonPressed())
+        {
+
+        }
+        
+    }
+
     private void ManageShooter()
     {
 
@@ -131,19 +193,19 @@ public class Robot extends TimedRobot {
 
 
         //boolean btn1 = _joystick.getRawButton(1); /* is button is down, print joystick values */
-        if(_controller.getStartButtonPressed())
+        if(_operatorController.getStartButtonPressed())
         {
             ToggleShooterEnabled();
         }
 
 
-        if(_controller.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
+        if(_operatorController.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
         {
             shooterPower -= shooterIncrement;
             SetShooterPower(shooterPower);
         }
 
-        if(_controller.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
+        if(_operatorController.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
         {
             shooterPower += shooterIncrement;
             SetShooterPower(shooterPower);
@@ -181,5 +243,64 @@ public class Robot extends TimedRobot {
     private void ToggleShooterEnabled()
     {
         shooterEnabled = !shooterEnabled;
+    }
+    private void DeployColorSensor()
+    {
+        SmartDashboard.putString("Status","Deploying Control Operation Arm");
+        //Deploy Color Sensor
+
+        //Read initial color
+
+        SmartDashboard.putString("Status","Control Operation Arm deployed. Driver has the folowing options. \n\nPress X for Rotation Control \nPress B for Poisition Control (Color), \nPress A to retract arm and cancel.");
+
+    }
+    private void Rotate(int rotationCount)
+    {
+
+    }
+    private void RotateToColor()
+    {
+        ControlPannelColor color = null;
+
+        SmartDashboard.putString("Status", "Waiting for Color.  Driver press A to cancel");
+        while(color==null && !_driveController.getAButtonPressed())
+        {
+            color = GetColorFromFms();
+        }
+        
+        //Get Color from Color sensor. 
+
+    }
+    private ControlPannelColor GetColorFromFms()
+    {
+        ControlPannelColor output = null;
+        String gameData;
+        if(_driverStation==null)
+            _driverStation = DriverStation.getInstance();
+
+        gameData = _driverStation.getGameSpecificMessage();
+        if(gameData.length()>0)
+        {
+            switch (gameData.charAt(0))
+            {
+                case 'B':
+                    output = ControlPannelColor.Blue;
+                    break;
+                case 'R':
+                    output = ControlPannelColor.Red;
+                case 'Y':
+                    output =  ControlPannelColor.Yellow;
+                case 'G':
+                    output = ControlPannelColor.Green;
+                    break;
+                
+            }
+
+        }
+        return output;
+    }
+
+    public enum ControlPannelColor{
+        Blue, Red, Green, Yellow
     }
 }
