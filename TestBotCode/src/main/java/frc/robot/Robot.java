@@ -33,28 +33,36 @@
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.Faults;
-import com.ctre.phoenix.motorcontrol.InvertType;
+//import com.ctre.phoenix.motorcontrol.InvertType;
 //import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.revrobotics.SparkMax;
-import edu.wpi.first.wpilibj.Timer;
+//import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 public class Robot extends TimedRobot {
-    private final Timer m_timer = new Timer();
     /*
      * --- [1] Update CAN Device IDs ------
-     */
-    WPI_VictorSPX _rightShooter = new WPI_VictorSPX(0);
-    WPI_VictorSPX _leftShooter = new WPI_VictorSPX(1); 
- 
+     */ 
 
-    XboxController _controller = new XboxController(0);
+    private CANSparkMax _leftMotorControllerFront = new CANSparkMax(1, MotorType.kBrushless);
+    private CANSparkMax _rightMotorControllerFront = new CANSparkMax(2, MotorType.kBrushless); 
+    private CANSparkMax _leftMotorControllerBack = new CANSparkMax(3, MotorType.kBrushless);
+    private CANSparkMax _rightMotorControllerBack = new CANSparkMax(4, MotorType.kBrushless);
+    private WPI_VictorSPX _leftShooter = new WPI_VictorSPX(5);
+    private WPI_VictorSPX _rightShooter = new WPI_VictorSPX(6);
+    private WPI_VictorSPX _intake = new WPI_VictorSPX(7);
+    private DifferentialDrive m_myRobot; 
+    private Boolean intakeEnabled;
+
+    private XboxController m_driverStick = new XboxController(0);
+    private XboxController m_operatorStick = new XboxController(1);
 
     Faults _faults_L = new Faults();
     Faults _faults_R = new Faults();
@@ -63,53 +71,47 @@ public class Robot extends TimedRobot {
     private final double maxShooterPower = 1.0;
     private final double shooterIncrement = 0.01;
 
-    private double shooterPower = 0.0;
+    private double shooterPower = 0.5;
     private boolean shooterEnabled = false;
 
     @Override
     public void teleopPeriodic() {
         ManageShooter();
         ManageDrive();
+        ManageIntake();        
     }
 
     @Override
     public void robotInit() {
         InitShooter();
+        InitDrive();
+        InitIntake();
+        shooterPower = 0.5;
+        
+        //text change changed a little bit 
+
 
     }
-    /**
-     * This function is run once each time the robot enters autonomous mode.
-     */
-    @Override
-    public void autonomousInit() {
-      m_timer.reset();
-      m_timer.start();
-    }
-  
-    /**
-     * This function is called periodically during autonomous.
-     */
-    @Override
-    public void autonomousPeriodic() {
-      
-      if (m_timer.get() < 2.0) {
-        m_robotDrive.arcadeDrive(0.5, 0.5);
-      } else {
+    private void InitDrive(){
+        m_myRobot = new DifferentialDrive(_leftMotorControllerFront, _rightMotorControllerFront );
+        _leftMotorControllerFront.restoreFactoryDefaults();
+        _rightMotorControllerFront.restoreFactoryDefaults();
+        _leftMotorControllerBack.restoreFactoryDefaults();
+        _rightMotorControllerBack.restoreFactoryDefaults();
+        _leftMotorControllerBack.follow(_leftMotorControllerFront);
+        _rightMotorControllerBack.follow(_rightMotorControllerFront);
         
-      }
-  
-      
+
     }
 
     private void InitShooter()
     {
         /* factory default values */
-        _rightShooter.configFactoryDefault();
-        _leftShooter.configFactoryDefault();
+
 
         /* [3] flip values so robot moves forward when stick-forward/LEDs-green */
         _rightShooter.setInverted(true); // !< Update this
-        _leftShooter.setInverted(false); // !< Update this
+        _leftShooter.setInverted(true); // !< Update this
 
         /*
          * [4] adjust sensor phase so sensor moves positive when Talon LEDs are green
@@ -118,30 +120,40 @@ public class Robot extends TimedRobot {
         _leftShooter.setSensorPhase(true);
 
     }
-    private void ManageDrive()
-    {
+
+    private void InitIntake(){
+        _intake.setSensorPhase(true);
+        _intake.setInverted(true);
+        intakeEnabled=false;
+    }
+
+    private void ManageDrive(){
+        m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), -1* m_driverStick.getX(Hand.kLeft));
+
 
     }
+
     private void ManageShooter()
     {
 
-        String work = "";
+        //String work = "";
 
 
         //boolean btn1 = _joystick.getRawButton(1); /* is button is down, print joystick values */
-        if(_controller.getStartButtonPressed())
+        if(m_operatorStick.getStartButtonPressed())
         {
+
             ToggleShooterEnabled();
         }
 
 
-        if(_controller.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
+        if(m_operatorStick.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
         {
             shooterPower -= shooterIncrement;
             SetShooterPower(shooterPower);
         }
 
-        if(_controller.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
+        if(m_operatorStick.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
         {
             shooterPower += shooterIncrement;
             SetShooterPower(shooterPower);
@@ -162,12 +174,28 @@ public class Robot extends TimedRobot {
         _rightShooter.getFaults(_faults_R);
 
         if (_faults_L.SensorOutOfPhase) {
-            work += " L sensor is out of phase";
+           // work += " L sensor is out of phase";
         }
         if (_faults_R.SensorOutOfPhase) {
-            work += " R sensor is out of phase";
+            //work += " R sensor is out of phase";
         }
 
+    }
+
+    private void ManageIntake()
+    {
+      if (m_operatorStick.getBButtonPressed())  {
+          if (intakeEnabled){
+            _intake.set(0.0);
+            intakeEnabled = !intakeEnabled; 
+          } else {
+            _intake.set(0.95);  
+            intakeEnabled = !intakeEnabled;
+            SmartDashboard.putBoolean("Intake Enabled", intakeEnabled); 
+          }
+      }
+      SmartDashboard.putBoolean("Intake Enabled", intakeEnabled);
+      SmartDashboard.putNumber("Intake Power", 0.5);
     }
 
     private void SetShooterPower(double power)
@@ -180,4 +208,5 @@ public class Robot extends TimedRobot {
     {
         shooterEnabled = !shooterEnabled;
     }
+    
 }
