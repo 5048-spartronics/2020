@@ -5,7 +5,7 @@ import frc.robot.teamcode.enums.FieldComponentColor;
 public class ControlPanelController
 {
     private Boolean _Extended;
-    public ControlPanel()
+    public ControlPanelController()
     {
         _Extended=false;
     }
@@ -18,7 +18,7 @@ public class ControlPanelController
 
     }
 
-    public FieldComponentColor GetCurrentColor()
+    /*public FieldComponentColor GetCurrentColor()
     {
         
     }
@@ -26,7 +26,7 @@ public class ControlPanelController
     public FieldComponentColor GetColorUnderSensor()
     {
 
-    }
+    }*/
     public void AdjustLeft()
     {
 
@@ -34,5 +34,9 @@ public class ControlPanelController
     public void AdjustRight()
     {
 
+    }
+    private void getColorFromFms()
+    {
+        
     }
 }
