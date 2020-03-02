@@ -187,7 +187,7 @@ public class Robot extends TimedRobot {
     private void ManageDrive(){
         double x = m_driverStick.getX(Hand.kLeft);
         
-        if (x>.1 || x<-.1)
+        if (x>.3 || x<-.3)
         {
             m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), -1* m_driverStick.getX(Hand.kLeft));
 
