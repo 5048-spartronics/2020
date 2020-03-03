@@ -81,6 +81,7 @@ public class Robot extends TimedRobot {
     private double shooterPower = 0.5;
     private boolean shooterEnabled = false;
     private Timer m_timer = new Timer();
+    private Timer m_timer2 = new Timer();
     private final SendableChooser<String> m_chooser = new SendableChooser<>();
     private final static String defaultAuto = "Default Auto";
     private final static String customAuto = "Custom Auto";
@@ -232,14 +233,25 @@ public class Robot extends TimedRobot {
         if(m_operatorStick.getStartButtonPressed())
         {
             ToggleShooterEnabled();
-            m_timer.reset();
-            m_timer.start();
+            m_timer2.reset();
+            m_timer2.start();
             
             
         }
-        if (m_timer.get() > 0.5){
+        if (m_operatorStick.getTriggerAxis(Hand.kRight) > 0.5){
             _indexer.setAngle(30.0);
-            m_timer.stop();
+            
+            m_timer2.reset();
+            m_timer2.start();
+            while(m_timer2.get()<.5)
+            {
+
+            }
+
+            _indexer.setAngle(indexposition);
+
+            m_timer2.stop();
+            m_timer2.reset();
         }
 
 
