@@ -43,6 +43,7 @@ import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+//import jdk.internal.agent.resources.agent_de;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -84,6 +85,10 @@ public class Robot extends TimedRobot {
     private final static String customAuto = "Custom Auto";
     private String m_autoSelected;
     private Double ramprate = 0.5;
+
+    //deadband var
+    private Double xDriveVal = 0.0;
+    private Double yDriveVal = 0.0; 
 
     @Override
     public void robotInit() {
@@ -186,19 +191,29 @@ public class Robot extends TimedRobot {
 
     private void ManageDrive(){
         double x = m_driverStick.getX(Hand.kLeft);
+        double y = m_driverStick.getY(Hand.kLeft);
         
         if (x>.3 || x<-.3)
         {
-            m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), -1* m_driverStick.getX(Hand.kLeft));
+            xDriveVal = m_driverStick.getX(Hand.kLeft);
 
         }
         else
         {
-            m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), 0);
+            xDriveVal = 0.0;
         }
+        if (y>.3 || y<-.3)
+        {
+            yDriveVal = m_driverStick.getY(Hand.kLeft);
 
-
-    }
+        }
+        else
+        {
+            yDriveVal = 0.0;
+        }
+        m_myRobot.arcadeDrive(xDriveVal, yDriveVal);
+    } 
+    
 
     private void ManageShooter()
     {
