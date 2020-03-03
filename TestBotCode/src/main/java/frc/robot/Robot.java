@@ -46,6 +46,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import jdk.internal.agent.resources.agent_de;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Servo;
@@ -104,6 +105,11 @@ public class Robot extends TimedRobot {
         _rightMotorControllerFront.setOpenLoopRampRate(ramprate);
         _leftMotorControllerBack.setOpenLoopRampRate(ramprate);
         _rightMotorControllerBack.setOpenLoopRampRate(ramprate);
+
+        _rightMotorControllerBack.setIdleMode(IdleMode.kBrake);
+        _leftMotorControllerBack.setIdleMode(IdleMode.kBrake);
+        _rightMotorControllerFront.setIdleMode(IdleMode.kBrake);
+        _leftMotorControllerFront.setIdleMode(IdleMode.kBrake);
     }
 
     // auton
@@ -161,7 +167,7 @@ public class Robot extends TimedRobot {
         _rightMotorControllerBack.restoreFactoryDefaults();
         _leftMotorControllerBack.follow(_leftMotorControllerFront);
         _rightMotorControllerBack.follow(_rightMotorControllerFront);
-        
+    
 
     }
 
@@ -192,7 +198,7 @@ public class Robot extends TimedRobot {
     private void ManageDrive(){
         double x = m_driverStick.getX(Hand.kLeft);
         double y = m_driverStick.getY(Hand.kLeft);
-        
+         
         if (x>.3 || x<-.3)
         {
             xDriveVal = m_driverStick.getX(Hand.kLeft);
@@ -202,6 +208,7 @@ public class Robot extends TimedRobot {
         {
             xDriveVal = 0.0;
         }
+        //yDriveVal = (y>.3 || y<-.3)?m_driverStick.getY(Hand.kLeft):0.0;
         if (y>.3 || y<-.3)
         {
             yDriveVal = m_driverStick.getY(Hand.kLeft);
@@ -211,7 +218,7 @@ public class Robot extends TimedRobot {
         {
             yDriveVal = 0.0;
         }
-        m_myRobot.arcadeDrive(xDriveVal, yDriveVal);
+        m_myRobot.arcadeDrive(yDriveVal, -1* xDriveVal);
     } 
     
 
@@ -227,11 +234,12 @@ public class Robot extends TimedRobot {
             ToggleShooterEnabled();
             m_timer.reset();
             m_timer.start();
-            if (m_timer.get() > 0.25){
-                _indexer.setAngle(30.0);
-            }
             
             
+        }
+        if (m_timer.get() > 0.5){
+            _indexer.setAngle(30.0);
+            m_timer.stop();
         }
 
 
