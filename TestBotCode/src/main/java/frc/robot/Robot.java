@@ -164,11 +164,11 @@ public class Robot extends TimedRobot {
         m_myRobot = new DifferentialDrive(_leftMotorControllerFront, _rightMotorControllerFront );
         _leftMotorControllerFront.restoreFactoryDefaults();
         _rightMotorControllerFront.restoreFactoryDefaults();
+        _rightMotorControllerFront.setInverted(true);
         _leftMotorControllerBack.restoreFactoryDefaults();
         _rightMotorControllerBack.restoreFactoryDefaults();
         _leftMotorControllerBack.follow(_leftMotorControllerFront);
         _rightMotorControllerBack.follow(_rightMotorControllerFront);
-    
 
     }
 
@@ -201,7 +201,7 @@ public class Robot extends TimedRobot {
         double y = m_driverStick.getY(Hand.kLeft);
          
         if (x>.3 || x<-.3)
-        {
+        {   
             xDriveVal = m_driverStick.getX(Hand.kLeft);
 
         }
@@ -210,7 +210,7 @@ public class Robot extends TimedRobot {
             xDriveVal = 0.0;
         }
         //yDriveVal = (y>.3 || y<-.3)?m_driverStick.getY(Hand.kLeft):0.0;
-        if (y>.3 || y<-.3)
+        if (y>.2 || y<-.2)
         {
             yDriveVal = m_driverStick.getY(Hand.kLeft);
 
@@ -219,7 +219,8 @@ public class Robot extends TimedRobot {
         {
             yDriveVal = 0.0;
         }
-        m_myRobot.arcadeDrive(yDriveVal, -1* xDriveVal);
+        //m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), -1* m_driverStick.getX(Hand.kLeft));
+        m_myRobot.arcadeDrive(-1* xDriveVal, yDriveVal);
     } 
     
 
@@ -243,7 +244,7 @@ public class Robot extends TimedRobot {
             
             m_timer2.reset();
             m_timer2.start();
-            while(m_timer2.get()<.5)
+            while(m_timer2.get()<.75)
             {
 
             }
