@@ -62,10 +62,12 @@ public class Robot extends TimedRobot {
     private CANSparkMax _rightMotorControllerBack = new CANSparkMax(4, MotorType.kBrushless);
     private WPI_VictorSPX _leftShooter = new WPI_VictorSPX(5);
     private WPI_VictorSPX _rightShooter = new WPI_VictorSPX(6);
+    private WPI_VictorSPX _liftMotor = new WPI_VictorSPX(10);
     private WPI_VictorSPX _intake = new WPI_VictorSPX(7);
     private Servo _indexer = new Servo(0);
     private DifferentialDrive m_myRobot;
     private Boolean intakeEnabled;
+    private Boolean intakeTimerStarted;
     private Double indexposition = 90.0; // this stops servo
 
     private XboxController m_driverStick = new XboxController(0);
@@ -156,6 +158,7 @@ public class Robot extends TimedRobot {
         ManageShooter();
         ManageDrive();
         ManageIntake();        
+        ManageLifter();
     }
         
         //added in auto stuff into robotinit
@@ -194,6 +197,7 @@ public class Robot extends TimedRobot {
         _intake.setSensorPhase(true);
         _intake.setInverted(true);
         intakeEnabled=false;
+        intakeTimerStarted = false;
     }
 
     private void ManageDrive(){
@@ -209,7 +213,7 @@ public class Robot extends TimedRobot {
         {
             xDriveVal = 0.0;
         }
-        //yDriveVal = (y>.3 || y<-.3)?m_driverStick.getY(Hand.kLeft):0.0;
+        
         if (y>.2 || y<-.2)
         {
             yDriveVal = m_driverStick.getY(Hand.kLeft);
@@ -219,40 +223,34 @@ public class Robot extends TimedRobot {
         {
             yDriveVal = 0.0;
         }
-        //m_myRobot.arcadeDrive(m_driverStick.getY(Hand.kLeft), -1* m_driverStick.getX(Hand.kLeft));
-        m_myRobot.arcadeDrive(-1* xDriveVal, yDriveVal);
+        m_myRobot.arcadeDrive(yDriveVal, -1* xDriveVal);
     } 
     
 
     private void ManageShooter()
     {
-
-        //String work = "";
-
-
-        //boolean btn1 = _joystick.getRawButton(1); /* is button is down, print joystick values */
-        if(m_operatorStick.getStartButtonPressed())
-        {
-            ToggleShooterEnabled();
-            m_timer2.reset();
-            m_timer2.start();
-            
-            
-        }
         if (m_operatorStick.getTriggerAxis(Hand.kRight) > 0.5){
-            _indexer.setAngle(30.0);
-            
-            m_timer2.reset();
-            m_timer2.start();
-            while(m_timer2.get()<.75)
+            if(!intakeEnabled && !intakeTimerStarted)
             {
-
+                m_timer2.reset();
+                m_timer2.start();
+                intakeTimerStarted = true;
             }
-
-            _indexer.setAngle(indexposition);
-
-            m_timer2.stop();
-            m_timer2.reset();
+            else if(!intakeEnabled && intakeTimerStarted && m_timer2.get()>.25)
+            {
+                m_timer2.stop();
+                _indexer.setAngle(30.0);
+                intakeEnabled = true;
+                intakeTimerStarted = false;
+            }
+        }
+        else
+        {
+            if(intakeEnabled)
+            {
+                _indexer.setAngle(indexposition);
+                intakeEnabled = false;
+            }
         }
 
 
@@ -294,6 +292,17 @@ public class Robot extends TimedRobot {
 
     }
 
+    private void ManageLifter()
+    {
+        if (m_operatorStick.getTriggerAxis(Hand.kLeft) > 0.5){
+            _liftMotor.set(.85);
+        }
+        else
+        {
+            _liftMotor.set(0.0);
+        }
+    }
+
     private void ManageIntake()
     {
       if (m_operatorStick.getBButtonPressed())  {
@@ -316,9 +325,9 @@ public class Robot extends TimedRobot {
         _leftShooter.set(power);
         
     }
-    private void ToggleShooterEnabled()
-    {
-        shooterEnabled = !shooterEnabled;
-    }
+    //private void ToggleShooterEnabled()
+    //{
+    //    shooterEnabled = !shooterEnabled;
+    //}
     
 }
