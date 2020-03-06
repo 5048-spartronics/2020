@@ -66,8 +66,7 @@ public class Robot extends TimedRobot {
     private WPI_VictorSPX _intake = new WPI_VictorSPX(7);
     private Servo _indexer = new Servo(0);
     private DifferentialDrive m_myRobot;
-    private Boolean intakeEnabled=false;
-    private Boolean intakeTimerStarted;
+    private Boolean intakeEnabled;
     private Double indexposition = 90.0; // this stops servo
 
     private XboxController m_driverStick = new XboxController(0);
@@ -76,14 +75,15 @@ public class Robot extends TimedRobot {
     Faults _faults_L = new Faults();
     Faults _faults_R = new Faults();
 
-    private final double minShooterPower = 0.0;
-    private final double maxShooterPower = 1.0;
-    private final double shooterIncrement = 0.01;
+    //private final double minShooterPower = 0.0;
+    //private final double maxShooterPower = 1.0;
+    //private final double shooterIncrement = 0.01;
 
-    private double shooterPower = 0.5;
+    private double shooterPower ;
     private boolean shooterEnabled = false;
+    private boolean shooterTimerStarted = false;
     private Timer m_timer = new Timer();
-    private Timer m_timer2 = new Timer();
+    private Timer m_shooterTimer = new Timer();
     private final SendableChooser<String> m_chooser = new SendableChooser<>();
     private final static String defaultAuto = "Default Auto";
     private final static String customAuto = "Custom Auto";
@@ -127,31 +127,41 @@ public class Robot extends TimedRobot {
 
     public void autonomousPeriodic() {
         switch (m_autoSelected) {
-        case customAuto:
-            while (m_timer.get() > 14.0) {
-                m_myRobot.arcadeDrive(0.5, 0.0);
-            }
-            break;
+            case customAuto:
+                while (m_timer.get() > 14.0) {
+                    m_myRobot.arcadeDrive(0.5, 0.0);
+                }
+                break;
 
-        case defaultAuto:
-        default:
-            while (m_timer.get() < 1.75) {
-                m_myRobot.arcadeDrive(0.5, 0.0);
-            }
-            SetShooterPower(0.75);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            case defaultAuto:
+            default:
+                while (m_timer.get() < 1.75) {
+                    m_myRobot.arcadeDrive(0.5, 0.0);
+                }
+                
+                SetShooterPower(shooterPower);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 while (m_timer.get() < 8.0){
                     _indexer.setAngle(30.0);
                 }
                 _indexer.setAngle(indexposition);
                 break;
                 
-            }
-        } 
+        }
+    } 
+    @Override
+    public void teleopInit() {
+            
+        intakeEnabled=false;
+        _intake.set(0.0);
+        shooterTimerStarted = false;
+        shooterEnabled = false;
+        
+    }
 
     @Override
     public void teleopPeriodic() {
@@ -197,7 +207,6 @@ public class Robot extends TimedRobot {
         _intake.setSensorPhase(true);
         _intake.setInverted(true);
         intakeEnabled=false;
-        intakeTimerStarted = false;
     }
 
     private void ManageDrive(){
@@ -230,69 +239,31 @@ public class Robot extends TimedRobot {
     private void ManageShooter()
     {
         if (m_operatorStick.getTriggerAxis(Hand.kRight) > 0.5){
-            if(!intakeEnabled && !intakeTimerStarted)
+            if(!shooterEnabled && !shooterTimerStarted)
             {
-                SetShooterPower( .75);
-                m_timer2.reset();
-                m_timer2.start();
-                intakeTimerStarted = true;
+                SetShooterPower(shooterPower);
+                m_shooterTimer.reset();
+                m_shooterTimer.start();
+                shooterTimerStarted = true;
             }
-            else if(!intakeEnabled && intakeTimerStarted && m_timer2.get()>.25)
+            else if(!shooterEnabled && shooterTimerStarted && m_shooterTimer.get()>.25)
             {
-                m_timer2.stop();
+                m_shooterTimer.stop();
                 _indexer.setAngle(30.0);
-                intakeEnabled = true;
-                intakeTimerStarted = false;
+                shooterEnabled = true;
+                shooterTimerStarted = false;
             }
         }
         else
         {
-            if(intakeEnabled)
+            if(shooterEnabled)
             {
                 SetShooterPower(0.0);
                 _indexer.setAngle(indexposition);
-                intakeEnabled = false;
+                shooterEnabled = false;
             }
         }
-
-
-       /* if(m_operatorStick.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
-        {
-            shooterPower -= shooterIncrement;
-            SetShooterPower(shooterPower);
-            
-        }
-
-        if(m_operatorStick.getYButtonPressed() && shooterPower < maxShooterPower && shooterEnabled)
-        {
-            shooterPower += shooterIncrement;
-            SetShooterPower(shooterPower);
-        }
-
-        if(shooterEnabled)
-        {
-            SetShooterPower(shooterPower);
-        }
-        else{
-            SetShooterPower(0.0);
-            //_indexer.setAngle(90.0);
-
-        }
-
-        SmartDashboard.putNumber("power", shooterPower);
-        SmartDashboard.putBoolean("Shooter Enabled", shooterEnabled);
-       
-        _leftShooter.getFaults(_faults_L);
-        _rightShooter.getFaults(_faults_R);
-
-        if (_faults_L.SensorOutOfPhase) {
-           // work += " L sensor is out of phase";
-        }
-        if (_faults_R.SensorOutOfPhase) {
-            //work += " R sensor is out of phase";
-        }
-
-    */}
+    }
     private void ManageLifter()
     {
         if (m_driverStick.getTriggerAxis(Hand.kLeft) > 0.5){
@@ -300,24 +271,24 @@ public class Robot extends TimedRobot {
         }
         else
         {
-            _liftMotor.set(0.0);
+            if(_liftMotor.get()>0.0)
+                _liftMotor.set(0.0);
         }
     }
 
     private void ManageIntake()
     {
       if (m_operatorStick.getBButtonPressed())  {
-          if (intakeEnabled){
-            _intake.set(0.0);
-            intakeEnabled = !intakeEnabled; 
-          } else {
-            _intake.set(0.95);  
-            intakeEnabled = !intakeEnabled;
-            SmartDashboard.putBoolean("Intake Enabled", intakeEnabled); 
-          }
+        if (intakeEnabled){
+        _intake.set(0.0);
+        intakeEnabled = !intakeEnabled; 
+        } else {
+        _intake.set(0.95);  
+        intakeEnabled = !intakeEnabled;
+        }
+        SmartDashboard.putBoolean("Intake Enabled", intakeEnabled);
+        SmartDashboard.putNumber("Intake Power", 0.5);
       }
-      SmartDashboard.putBoolean("Intake Enabled", intakeEnabled);
-      SmartDashboard.putNumber("Intake Power", 0.5);
     }
 
     private void SetShooterPower(double power)
@@ -326,9 +297,5 @@ public class Robot extends TimedRobot {
         _leftShooter.set(power);
         
     }
-    //private void ToggleShooterEnabled()
-    //{
-    //    shooterEnabled = !shooterEnabled;
-    //}
     
 }
