@@ -62,11 +62,11 @@ public class Robot extends TimedRobot {
     private CANSparkMax _rightMotorControllerBack = new CANSparkMax(4, MotorType.kBrushless);
     private WPI_VictorSPX _leftShooter = new WPI_VictorSPX(5);
     private WPI_VictorSPX _rightShooter = new WPI_VictorSPX(6);
-    private WPI_VictorSPX _liftMotor = new WPI_VictorSPX(10);
+    private WPI_VictorSPX _liftMotor = new WPI_VictorSPX(8);
     private WPI_VictorSPX _intake = new WPI_VictorSPX(7);
     private Servo _indexer = new Servo(0);
     private DifferentialDrive m_myRobot;
-    private Boolean intakeEnabled;
+    private Boolean intakeEnabled=false;
     private Boolean intakeTimerStarted;
     private Double indexposition = 90.0; // this stops servo
 
@@ -158,7 +158,7 @@ public class Robot extends TimedRobot {
         ManageShooter();
         ManageDrive();
         ManageIntake();        
-        ManageLifter();
+        ManageLifter();    
     }
         
         //added in auto stuff into robotinit
@@ -167,7 +167,7 @@ public class Robot extends TimedRobot {
         m_myRobot = new DifferentialDrive(_leftMotorControllerFront, _rightMotorControllerFront );
         _leftMotorControllerFront.restoreFactoryDefaults();
         _rightMotorControllerFront.restoreFactoryDefaults();
-        _rightMotorControllerFront.setInverted(true);
+        _rightMotorControllerFront.setInverted(false);
         _leftMotorControllerBack.restoreFactoryDefaults();
         _rightMotorControllerBack.restoreFactoryDefaults();
         _leftMotorControllerBack.follow(_leftMotorControllerFront);
@@ -232,6 +232,7 @@ public class Robot extends TimedRobot {
         if (m_operatorStick.getTriggerAxis(Hand.kRight) > 0.5){
             if(!intakeEnabled && !intakeTimerStarted)
             {
+                SetShooterPower( .75);
                 m_timer2.reset();
                 m_timer2.start();
                 intakeTimerStarted = true;
@@ -248,13 +249,14 @@ public class Robot extends TimedRobot {
         {
             if(intakeEnabled)
             {
+                SetShooterPower(0.0);
                 _indexer.setAngle(indexposition);
                 intakeEnabled = false;
             }
         }
 
 
-        if(m_operatorStick.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
+       /* if(m_operatorStick.getAButtonPressed() && shooterPower > minShooterPower && shooterEnabled)
         {
             shooterPower -= shooterIncrement;
             SetShooterPower(shooterPower);
@@ -273,7 +275,7 @@ public class Robot extends TimedRobot {
         }
         else{
             SetShooterPower(0.0);
-            _indexer.setAngle(90.0);
+            //_indexer.setAngle(90.0);
 
         }
 
@@ -290,11 +292,10 @@ public class Robot extends TimedRobot {
             //work += " R sensor is out of phase";
         }
 
-    }
-
+    */}
     private void ManageLifter()
     {
-        if (m_operatorStick.getTriggerAxis(Hand.kLeft) > 0.5){
+        if (m_driverStick.getTriggerAxis(Hand.kLeft) > 0.5){
             _liftMotor.set(.85);
         }
         else
