@@ -103,6 +103,7 @@ public class Robot extends TimedRobot {
       angle = Math.floor(angle)%354;
     }
 
+    //If robot corrects the wrong way then move the -1 * up to the top if
     //turned left turning right
     if(angle < -1.0)
       turningValue = m_maxPower;
@@ -110,6 +111,26 @@ public class Robot extends TimedRobot {
     //turned right turning left
     if(angle > 1.0)
       turningValue = -1 * m_maxPower;
+
+    //If turning power is too much try commeing lines 108-113 and uncommenting 117-133
+    //turned left turning right
+    //if(angle < -1.0)
+    //{
+    //  turningValue = angle * 0.03;
+    //  if(turningValue < (-1 * m_maxPower))
+    //    turningValue = (-1 * m_maxPower);
+
+    //}
+
+    //turned right turning left
+    //if(angle > 1.0)
+    //{
+    //  turningValue = angle *0.03;
+    //  if(turningValue > m_maxPower)
+    //  {
+    //    turningValue = m_maxPower;
+    //  }
+    //}
 
     m_myRobot.arcadeDrive(joystickY, turningValue);
 
